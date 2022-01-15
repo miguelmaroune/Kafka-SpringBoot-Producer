@@ -9,8 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
 
 @RestController
 @Slf4j
@@ -20,7 +23,7 @@ public class LibraryEventsController {
     LibraryEventProducer libraryEventProducer;
 
     @PostMapping("/v1/libraryEvent")
-    public ResponseEntity<LibraryEvent> postLibraryEvent(@RequestBody LibraryEvent libraryEvent) throws JsonProcessingException {
+    public ResponseEntity<LibraryEvent> postLibraryEvent( @RequestBody @Valid  LibraryEvent libraryEvent) throws JsonProcessingException {
         //invoke the kafka producer
         log.info("Before : sendLibraryEvent ");
         libraryEvent.setLibraryEventType(LibraryEventType.NEW);
@@ -28,6 +31,21 @@ public class LibraryEventsController {
         log.info("After : sendLibraryEvent ");
 
         return ResponseEntity.status(HttpStatus.CREATED).body(libraryEvent);
+    }
+
+    @PutMapping("/v1/libraryEvent")
+    public ResponseEntity<?> putLibraryEvent( @RequestBody @Valid  LibraryEvent libraryEvent) throws JsonProcessingException {
+        //invoke the kafka producer
+        if(libraryEvent.getLibraryEventId() == null)
+        {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please pass the Library Event ID ");
+        }
+        log.info("Before : sendLibraryEvent ");
+        libraryEvent.setLibraryEventType(LibraryEventType.UPDATE);
+        libraryEventProducer.sendLibraryEvent_Approach2(libraryEvent);
+        log.info("After : sendLibraryEvent ");
+
+        return ResponseEntity.status(HttpStatus.OK).body(libraryEvent);
     }
 
 }
